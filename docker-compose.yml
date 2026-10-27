@@ -1,0 +1,58 @@
+name: tasks
+
+services:
+  db:
+    image: mariadb:11.8
+    env_file: db.env
+    volumes:
+      - db-data:/var/lib/mysql
+    networks: [db-net]
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    image: tasks-backend:v1
+    env_file: backend/.env.docker
+    networks: [web-net, db-net]
+    deploy:
+      replicas: 2
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  lb:
+    image: nginx:1.28-alpine
+    ports:
+      - "8000:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks: [web-net]
+    depends_on: [backend]
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:8000
+    image: tasks-frontend:v1
+    init: true
+    ports:
+      - "8081:8081"
+    networks: [web-net]
+    restart: unless-stopped
+
+networks:
+  web-net: {}
+  db-net:
+    internal: true
+
+volumes:
+  db-data:
+    external: true
