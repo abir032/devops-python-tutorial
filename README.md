@@ -15,6 +15,7 @@ browser ──► frontend (React) ──► lb (nginx) ──► backend ×2 (F
 | [`frontend/`](frontend/README.md) | React + TypeScript (Vite) single-page app, Dockerfile |
 | `docker-compose.yml` | Full stack: db, 2 backend replicas, nginx load balancer, frontend |
 | `nginx.conf` | Load balancer config |
+| [`infra/`](doc/AWS-INFRA.md) | Terraform for the AWS deployment (two VPCs, NAT instance, RDS) |
 | [`doc/`](doc/SETUP.md) | Documentation |
 
 ## Quick start (Docker Compose)
@@ -36,3 +37,10 @@ Open http://localhost:8081 (from a remote server, use an SSH tunnel).
 - Running every container by hand with `docker` commands
 - Docker Compose, with the compose file explained line by line
 - Operations (logs, scaling, backups) and troubleshooting
+
+**[AWS Infrastructure](doc/AWS-INFRA.md)** covers:
+
+- The Terraform deployment on AWS: two VPCs joined by peering, NAT instance, RDS MariaDB
+- Networking, security groups, IAM and secrets, and who can talk to whom
+- A file-by-file map of `infra/`
+- Review findings, costs and teardown

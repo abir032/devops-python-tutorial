@@ -13,12 +13,12 @@ output "ssh_config" {
       HostName ${aws_instance.web.public_ip}
       User ubuntu
       IdentityFile ~/.ssh/tasks-key
-    %{for i, b in aws_instance.backend~}
+   %{~for i, b in aws_instance.backend}
     Host tasks-backend-${i + 1}
       HostName ${b.private_ip}
       User ubuntu
       IdentityFile ~/.ssh/tasks-key
       ProxyJump tasks-web
-    %{endfor~}
+    %{~endfor}
   EOT
 }
