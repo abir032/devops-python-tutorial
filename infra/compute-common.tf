@@ -6,3 +6,40 @@ resource "aws_key_pair" "main" {
   key_name   = "${var.project}-key"
   public_key = file(pathexpand(var.ssh_public_key_path))
 }
+
+
+data "aws_caller_identity" "current" {}
+
+data "aws_iam_policy_document" "assume_ec2" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["ec2.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "backend" {
+  name               = "${var.project}-backend-role"
+  assume_role_policy = data.aws_iam_policy_document.assume_ec2.json
+}
+
+data "aws_iam_policy_document" "backend" {
+  statement {
+    sid       = "ReadOwnParameters"
+    actions   = ["ssm:GetParameter", "ssm:GetParameters", "ssm:GetParametersByPath"]
+    resources = ["arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/${var.project}/*"]
+  }
+}
+
+resource "aws_iam_role_policy" "backend" {
+  name   = "${var.project}-backend-policy"
+  role   = aws_iam_role.backend.id
+  policy = data.aws_iam_policy_document.backend.json
+}
+
+resource "aws_iam_instance_profile" "backend" {
+  name = "${var.project}-backend-profile"
+  role = aws_iam_role.backend.name
+}
